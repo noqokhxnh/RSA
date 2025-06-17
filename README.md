@@ -18,7 +18,10 @@
 
 ## Cài đặt
 
-1. Clone repository hoặc tải xuống các file nguồn
+1. Clone repository hoặc tải xuống các file nguồn   
+      ```bash
+      git clone https://github.com/noqokhxnh/RSA
+      ```
 2. Đảm bảo Python 3.x đã được cài đặt trên máy tính
 3. Không cần cài đặt thêm thư viện bổ sung
 
