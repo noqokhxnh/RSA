@@ -1,8 +1,53 @@
+import hashlib
+import random
+import math
+
+def is_prime(n, k=5):
+    """Kiểm tra tính nguyên tố của số n sử dụng thuật toán Miller-Rabin."""
+    if n <= 1:
+        return False
+    if n <= 3:
+        return True
+    if n % 2 == 0:
+        return False
+
+    # Tìm r và d sao cho n-1 = 2^r * d
+    r, d = 0, n - 1
+    while d % 2 == 0:
+        r += 1
+        d //= 2
+
+    # Thực hiện k lần kiểm tra
+    for _ in range(k):
+        a = random.randint(2, n - 2)
+        x = pow(a, d, n)
+        if x == 1 or x == n - 1:
+            continue
+        for _ in range(r - 1):
+            x = pow(x, 2, n)
+            if x == n - 1:
+                break
+        else:
+            return False
+    return True
+
+def generate_prime(bits):
+    """Tạo số nguyên tố ngẫu nhiên với số bit cho trước."""
+    while True:
+        # Tạo số ngẫu nhiên với số bit cho trước
+        n = random.getrandbits(bits)
+        # Đảm bảo số là lẻ
+        n |= 1
+        # Kiểm tra tính nguyên tố
+        if is_prime(n):
+            return n
+
 def gcd(a, b):
     """Tính ước chung lớn nhất (GCD) bằng thuật toán Euclid."""
-    while b:
-        a, b = b, a % b
-    return a
+    if (b==0):
+        return a
+    else:
+        return gcd(b,a%b)
 
 def mod_inverse(e, phi):
     """Tìm nghịch đảo modulo của e theo phi bằng thuật toán Euclid mở rộng."""
@@ -19,76 +64,99 @@ def mod_inverse(e, phi):
     d = (d % phi + phi) % phi
     return d
 
-def generate_keys(p, q, e):
+def generate_keys(p=None, q=None, e=None, bits=512):
     """Tạo khóa công khai và khóa bí mật."""
+    # Nếu không cung cấp p và q, tự động tạo
+    if p is None or q is None:
+        p = generate_prime(bits)
+        q = generate_prime(bits)
+    
     # Tính n = p * q
     n = p * q
     # Tính phi(n) = (p-1) * (q-1)
     phi = (p - 1) * (q - 1)
-    # Kiểm tra e có hợp lệ (coprime với phi)
+    
+    # Nếu không cung cấp e, tìm e phù hợp
+    if e is None:
+        while True:
+            e = random.randint(3, phi - 1)
+            if gcd(e, phi) == 1:
+                break
+    
+    # Kiểm tra e có hợp lệ
     if gcd(e, phi) != 1:
         raise ValueError("e không hợp lệ, phải là số nguyên tố cùng nhau với phi(n).")
+    
     # Tính d (nghịch đảo modulo của e)
     d = mod_inverse(e, phi)
     return (e, n), (d, n)
 
+def hash_message(message):
+    """Tạo giá trị băm mật mã cho thông điệp sử dụng SHA-256."""
+    if isinstance(message, str):
+        # Xử lý chuỗi
+        message = message.encode('utf-8')
+    elif isinstance(message, bytes):
+        # Đã là bytes
+        pass
+    else:
+        # Chuyển đổi số thành bytes
+        message = str(message).encode('utf-8')
+    
+    # Tạo băm SHA-256
+    hash_obj = hashlib.sha256(message)
+    # Chuyển đổi thành số nguyên
+    return int.from_bytes(hash_obj.digest(), byteorder='big')
+
 def sign_message(message, private_key):
     """Tạo chữ ký cho thông điệp bằng khóa bí mật."""
     d, n = private_key
-    # Chữ ký: S = message^d mod n
-    signature = pow(message, d, n)
+    # Tạo giá trị băm
+    hash_value = hash_message(message)
+    # Đảm bảo giá trị băm nằm trong khoảng [0, n-1]
+    hash_value = hash_value % n
+    # Tạo chữ ký
+    signature = pow(hash_value, d, n)
     return signature
 
 def verify_signature(message, signature, public_key):
     """Xác minh chữ ký bằng khóa công khai."""
     e, n = public_key
-    # Tính message' = signature^e mod n
-    verified_message = pow(signature, e, n)
-    return verified_message == message
-
-def hash_message(message):
-    """Tạo giá trị băm đơn giản cho thông điệp."""
-    hash_value = 0
-    for char in message:
-        hash_value = (hash_value * 31 + ord(char)) % 1000  # Giới hạn giá trị băm trong khoảng 0-999
-    return hash_value
+    # Tạo giá trị băm
+    hash_value = hash_message(message)
+    # Đảm bảo giá trị băm nằm trong khoảng [0, n-1]
+    hash_value = hash_value % n
+    # Xác minh chữ ký
+    verified_hash = pow(signature, e, n)
+    return verified_hash == hash_value
 
 def main():
     print("=== Hệ chữ ký RSA ===")
     
-    # Nhập các thông số
     try:
-        p = int(input("Nhập số nguyên tố p: "))
-        q = int(input("Nhập số nguyên tố q: "))
-        e = int(input("Nhập số e (phải là số nguyên tố cùng nhau với (p-1)*(q-1)): "))
+        # Tự động tạo p và q
+        print("Đang tạo các số nguyên tố...")
+        public_key, private_key = generate_keys()
+        p, q = None, None  # Không hiển thị p và q vì lý do bảo mật
         
-        # Nhập thông điệp gốc
+        # Nhập thông điệp
         original_message = input("Nhập thông điệp cần ký: ")
-        message = hash_message(original_message)
+        hash_val = hash_message(original_message)
         
-        # Kiểm tra tính hợp lệ của p và q
-        if p <= 1 or q <= 1:
-            raise ValueError("p và q phải là số nguyên tố lớn hơn 1")
-            
         print("\n=== Kết quả ===")
-        print(f"Thông số: p = {p}, q = {q}, e = {e}")
         print(f"Thông điệp gốc: {original_message}")
-        print(f"Giá trị băm H(M): {message}")
+        print(f"Giá trị băm SHA-256: {hash_val}")
 
-        # Tạo khóa
-        public_key, private_key = generate_keys(p, q, e)
         print(f"\nKhóa công khai (e, n): {public_key}")
         print(f"Khóa bí mật (d, n): {private_key}")
 
         # Tạo chữ ký
-        signature = sign_message(message, private_key)
-        print(f"\nChữ ký (S = H(M)^d mod n): {signature}")
+        signature = sign_message(original_message, private_key)
+        print(f"\nChữ ký: {signature}")
 
         # Xác minh chữ ký
-        is_valid = verify_signature(message, signature, public_key)
+        is_valid = verify_signature(original_message, signature, public_key)
         print(f"Xác minh chữ ký: {'Hợp lệ' if is_valid else 'Không hợp lệ'}")
-        print(f"Thông điệp gốc: {original_message}")
-        print(f"Giá trị băm H(M): {message}")
         
     except ValueError as e:
         print(f"\nLỗi: {str(e)}")
