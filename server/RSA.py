@@ -6,8 +6,6 @@ import sympy
 app = Flask(__name__)
 CORS(app)
 
-
-# Hàm kiểm tra số nguyên tố lớn, sử dụng thư viện sympy để kiểm tra số nguyên tố lớn
 def is_prime(n):
     return sympy.isprime(n)
 
@@ -17,10 +15,7 @@ def gcd(a, b):
         return a
     return gcd(b, a % b)
 
-# Hàm tính nghịch đảo modular của e theo modulo phi
-# Sử dụng thuật toán Euclid mở rộng
-# Trả về d sao cho (d * e) % phi == 1
-# Nếu không tồn tại, trả về None
+# Hàm tính nghịch đảo modulo của e theo modulo phi
 def mod_inverse(e, phi):
     m0, x0, x1 = phi, 0, 1
     if phi == 0:
@@ -33,7 +28,7 @@ def mod_inverse(e, phi):
         x0, x1 = x1 - q * x0, x0
     return x1 + m0 if x1 < 0 else x1
 
-# Hàm sinh khóa RSA
+
 # Kiểm tra p, q là số nguyên tố, e hợp lệ, tính n, phi(n), d
 # Nếu hợp lệ trả về bộ khóa, nếu không trả về lỗi
 def generate_keys(p, q, e):
@@ -133,3 +128,5 @@ def api_verify_signature():
 # Chạy server Flask ở chế độ debug
 if __name__ == '__main__':
     app.run(debug=True)
+    
+    
