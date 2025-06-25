@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSA Digital Signature Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/big-integer/1.6.51/BigInteger.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="api.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button onclick="showCreateRSA()">Tạo khóa RSA</button>
+            <button onclick="showVerifySignature()">Kiểm tra chữ ký số</button>
+        </div>
+        <div class="content" id="content">
+            <div id="rsaForm" style="display:none;">
+                <h2>Tạo khóa RSA</h2>
+                <label for="keySize">Chọn kích thước khóa:</label>
+                <select id="keySize">
+                    <option value="1024">1024 bit</option>
+                    <option value="2048">2048 bit</option>
+                    <option value="4096">4096 bit</option>
+                </select>
+                <button onclick="generateKeys()">Sinh khóa (JS)</button>
+                <button onclick="generateKeysFromAPI()">Sinh khóa (API Python)</button>
+                <br><br>
+                <label for="privateKey">Khóa riêng:</label>
+                <textarea id="privateKey" rows="4" cols="50" readonly></textarea>
+                <br>
+                <label for="publicKey">Khóa công khai:</label>
+                <textarea id="publicKey" rows="4" cols="50" readonly></textarea>
+            </div>
+
+            <div id="signatureForm" style="display:none;">
+                <h2>Tạo và kiểm tra chữ ký số</h2>
+                <label for="message">Nội dung:</label>
+                <textarea id="message" rows="4" cols="50"></textarea>
+                <br>
+                <label for="signature">Chữ ký số:</label>
+                <textarea id="signature" rows="4" cols="50" readonly></textarea>
+                <br>
+                <button onclick="createSignature()" style="margin-top: 10px;">Tạo chữ ký (JS)</button>
+                <button onclick="signMessageFromAPI()" style="margin-top: 10px;">Tạo chữ ký (API Python)</button>
+                <button onclick="verifySignature()">Kiểm tra chữ ký</button>
+            </div>
+        </div>
+    </div>
+
+   
+
+    <script src="script.js"></script>
+</body>
+</html>
